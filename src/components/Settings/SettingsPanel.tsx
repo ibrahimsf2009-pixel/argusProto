@@ -48,12 +48,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
 
           <div style={fieldStyle}>
             <label style={{ fontSize: 13, fontWeight: 500 }}>Provider</label>
-            <select className="input" value={localConfig.aiProvider} onChange={e => {
-              const newProvider = e.target.value;
-              // Clear API key when switching providers to avoid stale key errors
-              updateConfig('aiProvider', newProvider);
-              updateConfig('apiKey', '');
-            }}>
+            <select className="input" value={localConfig.aiProvider} onChange={e => updateConfig('aiProvider', e.target.value)}>
               <option value="groq">Groq (Free — Llama 3.3 70B)</option>
               <option value="openai">OpenAI (GPT — requires credits)</option>
               <option value="local">Local Model</option>
@@ -65,6 +60,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
               <p className="text-muted" style={{ fontSize: 11, margin: 0 }}>
                 🆓 <strong>Groq is free</strong> — no credit card needed. Get your API key at{' '}
                 <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style={{ color: 'var(--argus-yellow)' }}>console.groq.com/keys</a>
+              </p>
+            </div>
+          )}
+
+          {localConfig.aiProvider === 'openai' && (
+            <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(255,171,0,0.08)', border: '1px solid rgba(255,171,0,0.2)' }}>
+              <p className="text-muted" style={{ fontSize: 11, margin: 0 }}>
+                💳 OpenAI requires credits. Get a key at{' '}
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style={{ color: 'var(--argus-yellow)' }}>platform.openai.com/api-keys</a>
               </p>
             </div>
           )}
