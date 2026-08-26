@@ -34,10 +34,16 @@ export interface ArgusConfig {
 }
 
 // ─── Gesture ───────────────────────────────────────────────────────────────
+export interface HandPosition {
+  x: number; // 0-1, left to right
+  y: number; // 0-1, top to bottom
+  z: number; // depth, negative = closer to camera
+}
+
 export interface GestureResult {
   gesture: 'open_palm' | 'thumbs_up' | 'thumbs_down' | 'point_left' | 'point_right' | 'fist' | 'none';
   confidence: number;
-  handPosition: { x: number; y: number } | null;
+  handPosition: HandPosition | null;
 }
 
 // ─── Window API Bridge ─────────────────────────────────────────────────────

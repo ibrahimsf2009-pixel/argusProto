@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { AppState } from '../../types';
+import { AppState, HandPosition } from '../../types';
 
 interface OrbViewProps {
   state: AppState;
+  handPosition?: HandPosition | null;
 }
 
 const STATE_LABELS: Record<AppState, string> = {
@@ -16,7 +17,7 @@ const STATE_ICONS: Record<AppState, string> = {
   speaking: '◈', error: '✕', startup: '○', setup: '⚙',
 };
 
-const OrbView: React.FC<OrbViewProps> = ({ state }) => {
+const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
     x: number; y: number; vx: number; vy: number;
@@ -24,6 +25,7 @@ const OrbView: React.FC<OrbViewProps> = ({ state }) => {
   }>>([]);
   const frameRef = useRef<number>(0);
   const timeRef = useRef(0);
+  const orbOffsetRef = useRef({ x: 0, y: 0, z: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -42,8 +44,7 @@ const OrbView: React.FC<OrbViewProps> = ({ state }) => {
       timeRef.current += 0.016;
       const w = canvas.width;
       const h = canvas.height;
-      const cx = w / 2;
-      const cy = h / 2;
+
       ctx.clearRect(0, 0, w, h);
 
       let pulseSpeed = 1, particleRate = 0.3, glowIntensity = 0.3, ringCount = 3;
@@ -58,7 +59,21 @@ const OrbView: React.FC<OrbViewProps> = ({ state }) => {
       const time = timeRef.current;
       const baseRadius = Math.min(w, h) * 0.15;
       const pulse = Math.sin(time * pulseSpeed) * 0.1 + 1;
-      const radius = baseRadius * pulse;
+
+      // Smooth hand tracking — lerp orb offset towards hand position
+      const targetX = handPosition ? (handPosition.x - 0.5) * w * 0.6 : 0;
+      const targetY = handPosition ? (handPosition.y - 0.5) * h * 0.6 : 0;
+      const targetZ = handPosition ? handPosition.z * 100 : 0;
+      const lerpFactor = 0.12;
+      orbOffsetRef.current.x += (targetX - orbOffsetRef.current.x) * lerpFactor;
+      orbOffsetRef.current.y += (targetY - orbOffsetRef.current.y) * lerpFactor;
+      orbOffsetRef.current.z += (targetZ - orbOffsetRef.current.z) * lerpFactor;
+      const offsetX = orbOffsetRef.current.x;
+      const offsetY = orbOffsetRef.current.y;
+      const scaleFromZ = 1 + orbOffsetRef.current.z * 0.003;
+      const radius = baseRadius * pulse * scaleFromZ;
+      const cx = w / 2 + offsetX;
+      const cy = h / 2 + offsetY;
 
       // Outer glow
       const gradient = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius * 2.5);
@@ -166,7 +181,7 @@ const OrbView: React.FC<OrbViewProps> = ({ state }) => {
 
     frameRef.current = requestAnimationFrame(animate);
     return () => { cancelAnimationFrame(frameRef.current); window.removeEventListener('resize', resize); };
-  }, [state]);
+  }, [state, handPosition]);
 
   const statusClass = useMemo(() => {
     switch (state) {

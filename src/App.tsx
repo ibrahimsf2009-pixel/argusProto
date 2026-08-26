@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppState, ChatMessage, ArgusConfig, View, ActionInfo, GestureResult } from './types';
+import { AppState, ChatMessage, ArgusConfig, View, ActionInfo, GestureResult, HandPosition } from './types';
 import TitleBar from './components/TitleBar';
 import OrbView from './components/Orb/OrbView';
 import ChatPanel from './components/Chat/ChatPanel';
@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const [isFirstRun, setIsFirstRun] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
+  const [handPosition, setHandPosition] = useState<HandPosition | null>(null);
 
   const addMessage = useCallback((role: 'user' | 'argus', content: string, action?: ActionInfo, isError?: boolean) => {
     const msg: ChatMessage = {
@@ -239,6 +240,13 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // ─── Sync camera state with config ────────────────────────────────────
+  useEffect(() => {
+    if (config) {
+      setCameraActive(config.cameraEnabled);
+    }
+  }, [config]);
+
   // ─── Render ────────────────────────────────────────────────────────────
   if (appState === 'startup') return <StartupScreen />;
 
@@ -278,18 +286,22 @@ const App: React.FC = () => {
             <CameraView
               enabled={cameraActive}
               onGestureDetected={handleGestureDetected}
+              onHandPosition={setHandPosition}
             />
-            <ChatPanel
-              messages={messages}
-              appState={appState}
-              onSend={executeCommand}
-              onToggleMic={() => setMicActive(prev => !prev)}
-              micActive={micActive}
-            />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <OrbView state={appState} handPosition={handPosition} />
+              <ChatPanel
+                messages={messages}
+                appState={appState}
+                onSend={executeCommand}
+                onToggleMic={() => setMicActive(prev => !prev)}
+                micActive={micActive}
+              />
+            </div>
           </div>
         ) : (
           <>
-            <OrbView state={appState} />
+            <OrbView state={appState} handPosition={handPosition} />
             <ChatPanel
               messages={messages}
               appState={appState}

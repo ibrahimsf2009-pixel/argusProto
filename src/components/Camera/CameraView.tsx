@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GestureResult } from '../../types';
+import { GestureResult, HandPosition } from '../../types';
 
 interface CameraViewProps {
   enabled: boolean;
   onGestureDetected?: (gesture: GestureResult) => void;
+  onHandPosition?: (position: HandPosition | null) => void;
 }
 
 const GESTURE_LABELS: Record<string, string> = {
@@ -23,7 +24,8 @@ function classifyGesture(landmarks: Array<{ x: number; y: number; z: number }>):
 
   const palmX = (wrist.x + indexMcp.x + pinkyMcp.x) / 3;
   const palmY = (wrist.y + indexMcp.y + pinkyMcp.y) / 3;
-  const handPosition = { x: palmX, y: palmY };
+  const palmZ = (wrist.z + indexMcp.z + pinkyMcp.z) / 3;
+  const handPosition: HandPosition = { x: palmX, y: palmY, z: palmZ };
 
   const indexExtended = indexTip.y < indexPip.y;
   const middleExtended = middleTip.y < middlePip.y;
@@ -49,7 +51,7 @@ function classifyGesture(landmarks: Array<{ x: number; y: number; z: number }>):
   return { gesture: 'none', confidence: 0, handPosition };
 }
 
-const CameraView: React.FC<CameraViewProps> = ({ enabled, onGestureDetected }) => {
+const CameraView: React.FC<CameraViewProps> = ({ enabled, onGestureDetected, onHandPosition }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraReady, setCameraReady] = useState(false);
@@ -104,6 +106,10 @@ const CameraView: React.FC<CameraViewProps> = ({ enabled, onGestureDetected }) =
           if (cancelled) return;
           if (results.multiHandLandmarks?.length > 0) {
             const gesture = classifyGesture(results.multiHandLandmarks[0]);
+            // Always emit continuous hand position for orb tracking
+            if (gesture.handPosition) {
+              onHandPosition?.(gesture.handPosition);
+            }
             const now = Date.now();
             if (gesture.gesture !== 'none' && gesture.gesture !== lastGestureRef.current && now - lastGestureTimeRef.current > GESTURE_COOLDOWN_MS) {
               lastGestureRef.current = gesture.gesture;
@@ -117,6 +123,7 @@ const CameraView: React.FC<CameraViewProps> = ({ enabled, onGestureDetected }) =
             }
           } else {
             setCurrentGesture({ gesture: 'none', confidence: 0, handPosition: null });
+            onHandPosition?.(null);
           }
         });
 
@@ -129,8 +136,8 @@ const CameraView: React.FC<CameraViewProps> = ({ enabled, onGestureDetected }) =
     };
 
     loadMediaPipe();
-    return () => { cancelled = true; handsRef.current = null; detectorReadyRef.current = false; };
-  }, [enabled, onGestureDetected, addGestureLog]);
+    return () => { cancelled = true; handsRef.current = null; detectorReadyRef.current = false; onHandPosition?.(null); };
+  }, [enabled, onGestureDetected, onHandPosition, addGestureLog]);
 
   // Camera + processing loop
   useEffect(() => {
