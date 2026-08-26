@@ -1,0 +1,305 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARGUS — Futuristic AI Assistant Theme (Web Version)
+   Primary: Electric Yellow/Amber
+   Secondary: Black, Dark Charcoal, Subtle Gray
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --argus-yellow: #FFD700;
+  --argus-amber: #FFAB00;
+  --argus-gold: #FFC107;
+  --argus-glow: rgba(255, 215, 0, 0.3);
+  --argus-glow-strong: rgba(255, 215, 0, 0.6);
+  --argus-glow-subtle: rgba(255, 215, 0, 0.1);
+
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: #141414;
+  --bg-glass: rgba(20, 20, 20, 0.7);
+  --bg-glass-hover: rgba(30, 30, 30, 0.8);
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #606060;
+  --text-yellow: #FFD700;
+
+  --border-subtle: rgba(255, 215, 0, 0.1);
+  --border-medium: rgba(255, 215, 0, 0.2);
+  --border-strong: rgba(255, 215, 0, 0.4);
+
+  --shadow-glow: 0 0 20px rgba(255, 215, 0, 0.15);
+  --shadow-glow-strong: 0 0 40px rgba(255, 215, 0, 0.25);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --titlebar-height: 36px;
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--argus-yellow); }
+
+/* ─── Titlebar ─────────────────────────────────────────────────────── */
+.titlebar {
+  height: var(--titlebar-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  z-index: 1000;
+  user-select: none;
+}
+
+.titlebar-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--argus-yellow);
+  letter-spacing: 3px;
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.titlebar-btn {
+  width: 32px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.titlebar-btn.close:hover {
+  background: #e81123;
+  color: white;
+}
+
+/* ─── Layout ───────────────────────────────────────────────────────── */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Glass Card ───────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  transition: all var(--transition-normal);
+}
+
+.glass-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ─── Buttons ──────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover {
+  border-color: var(--argus-yellow);
+  background: rgba(255, 215, 0, 0.08);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-primary {
+  background: var(--argus-yellow);
+  color: #0a0a0a;
+  border-color: var(--argus-yellow);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--argus-amber);
+  border-color: var(--argus-amber);
+  box-shadow: var(--shadow-glow-strong);
+}
+
+.btn-confirm {
+  background: var(--argus-yellow);
+  color: #0a0a0a;
+  border-color: var(--argus-yellow);
+  font-weight: 600;
+}
+
+.btn-confirm:hover { background: var(--argus-amber); }
+
+.btn-cancel {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.btn-cancel:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* ─── Status ───────────────────────────────────────────────────────── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online { background: var(--argus-yellow); box-shadow: 0 0 8px var(--argus-glow-strong); }
+.status-dot.offline { background: #ff5050; box-shadow: 0 0 8px rgba(255, 80, 80, 0.4); }
+.status-dot.standby { background: #606060; }
+
+/* ─── Input ────────────────────────────────────────────────────────── */
+.input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--argus-yellow);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.15);
+}
+
+.input::placeholder { color: var(--text-muted); }
+
+/* ─── Toggle ───────────────────────────────────────────────────────── */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 11px;
+  position: relative;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.toggle.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--argus-yellow);
+}
+
+.toggle-knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all var(--transition-fast);
+}
+
+.toggle.active .toggle-knob {
+  left: 20px;
+  background: var(--argus-yellow);
+  box-shadow: 0 0 8px var(--argus-glow-strong);
+}
+
+/* ─── Animations ───────────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--argus-glow); }
+  50% { box-shadow: 0 0 40px var(--argus-glow-strong); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes ambient-float {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  50% { opacity: 0.3; transform: translateY(-20px); }
+}
+
+/* ─── Utility ──────────────────────────────────────────────────────── */
+.text-yellow { color: var(--argus-yellow); }
+.text-muted { color: var(--text-secondary); }
+.text-mono { font-family: var(--font-mono); }
+.text-display { font-family: var(--font-display); }
