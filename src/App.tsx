@@ -50,8 +50,13 @@ function parseInput(text: string): ParsedCommand {
   return { action: 'ai', target: lower };
 }
 
-// ─── OpenAI Call ───────────────────────────────────────────────────────────
-async function callOpenAI(apiKey: string, userMessage: string, history: ChatMessage[]): Promise<string> {
+// ─── AI Call (supports OpenAI and Groq) ───────────────────────────────────
+const PROVIDER_CONFIG: Record<string, { url: string; model: string }> = {
+  openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-3.5-turbo' },
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile' },
+};
+
+async function callAI(provider: string, apiKey: string, userMessage: string, history: ChatMessage[]): Promise<string> {
   const systemPrompt = `You are ARGUS, a futuristic AI desktop assistant. You are intelligent, calm, fast, and concise. You help users with questions, open websites, and provide guidance. Keep responses brief unless the user asks for detail. You are running as a web application in the user's browser.`;
 
   const chatHistory = history.slice(-20).map(m => ({
@@ -59,14 +64,16 @@ async function callOpenAI(apiKey: string, userMessage: string, history: ChatMess
     content: m.content,
   }));
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const cfg = PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.openai;
+
+  const response = await fetch(cfg.url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model: cfg.model,
       messages: [
         { role: 'system', content: systemPrompt },
         ...chatHistory,
@@ -179,10 +186,11 @@ const App: React.FC = () => {
         setAppState('thinking');
         try {
           if (config?.apiKey) {
-            const response = await callOpenAI(config.apiKey, text, messages);
+            const response = await callAI(config.aiProvider, config.apiKey, text, messages);
             argusRespond(response);
           } else {
-            argusRespond('No AI provider configured. Please add your API key in Settings to enable intelligent responses.');
+            const providerName = config?.aiProvider === 'groq' ? 'Groq' : 'OpenAI';
+            argusRespond(`No API key configured. Go to Settings and add your ${providerName} API key. Get a free key at ${config?.aiProvider === 'groq' ? 'console.groq.com' : 'platform.openai.com'}.`, undefined, true);
           }
         } catch (err: any) {
           const msg = err.message || '';
@@ -240,7 +248,7 @@ const App: React.FC = () => {
       } catch {
         setAppState('startup');
         setConfig({
-          aiProvider: 'openai', apiKey: '', voiceEnabled: true,
+          aiProvider: 'groq', apiKey: '', voiceEnabled: true,
           cameraEnabled: false, gestureSensitivity: 0.7, theme: 'dark',
           startupBehavior: 'launch', wakeShortcut: 'Ctrl+Space',
         });

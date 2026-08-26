@@ -22,7 +22,7 @@ export type View = 'main' | 'settings' | 'camera';
 
 // ─── Config ────────────────────────────────────────────────────────────────
 export interface ArgusConfig {
-  aiProvider: 'openai' | 'local' | 'future';
+  aiProvider: 'openai' | 'groq' | 'local' | 'future';
   apiKey: string;
   voiceEnabled: boolean;
   cameraEnabled: boolean;

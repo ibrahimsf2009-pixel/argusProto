@@ -49,11 +49,20 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
           <div style={fieldStyle}>
             <label style={{ fontSize: 13, fontWeight: 500 }}>Provider</label>
             <select className="input" value={localConfig.aiProvider} onChange={e => updateConfig('aiProvider', e.target.value)}>
-              <option value="openai">OpenAI (GPT)</option>
+              <option value="groq">Groq (Free — Llama 3.3 70B)</option>
+              <option value="openai">OpenAI (GPT — requires credits)</option>
               <option value="local">Local Model</option>
-              <option value="future">Future Provider</option>
             </select>
           </div>
+
+          {localConfig.aiProvider === 'groq' && (
+            <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(100,200,100,0.08)', border: '1px solid rgba(100,200,100,0.2)' }}>
+              <p className="text-muted" style={{ fontSize: 11, margin: 0 }}>
+                🆓 <strong>Groq is free</strong> — no credit card needed. Get your API key at{' '}
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style={{ color: 'var(--argus-yellow)' }}>console.groq.com/keys</a>
+              </p>
+            </div>
+          )}
 
           <div style={fieldStyle}>
             <label style={{ fontSize: 13, fontWeight: 500 }}>API Key</label>

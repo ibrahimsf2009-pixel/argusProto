@@ -3,18 +3,10 @@
 
 import { ArgusConfig } from '../types';
 
-const CONFIG_KEY = 'argus_config';
-
-const DEFAULT_CONFIG: ArgusConfig = {
-  aiProvider: 'openai',
-  apiKey: '',
-  voiceEnabled: true,
-  cameraEnabled: false,
-  gestureSensitivity: 0.7,
-  theme: 'dark',
-  startupBehavior: 'launch',
-  wakeShortcut: 'Ctrl+Space',
-  setupComplete: false,
+const CONFIG_KEY = 'argus_config';const DEFAULT_CONFIG: ArgusConfig = {
+  aiProvider: 'groq', apiKey: '', voiceEnabled: true,
+  cameraEnabled: false, gestureSensitivity: 0.7, theme: 'dark',
+  startupBehavior: 'launch', wakeShortcut: 'Ctrl+Space', setupComplete: false,
 };
 
 const ALLOWED_WEBSITES: Record<string, string> = {
