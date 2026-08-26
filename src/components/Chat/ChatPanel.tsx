@@ -155,12 +155,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, appState, onSend, onTog
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-primary)' }}>
         <button type="button" onClick={onToggleMic} title={micActive ? 'Stop listening' : 'Start listening'} style={{
-          width: 38, height: 38, borderRadius: 10, border: `1px solid ${micActive ? 'var(--argus-yellow)' : 'var(--border-subtle)'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: '8px 14px', borderRadius: 10,
+          border: `1px solid ${micActive ? 'var(--argus-yellow)' : 'var(--border-medium)'}`,
           background: micActive ? 'rgba(255,215,0,0.15)' : 'var(--bg-tertiary)',
-          fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          color: micActive ? 'var(--argus-yellow)' : 'var(--text-secondary)',
+          fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 500, letterSpacing: 1,
+          cursor: 'pointer', flexShrink: 0, transition: 'all 150ms ease',
           animation: micActive ? 'status-pulse 1s ease-in-out infinite' : undefined,
-          boxShadow: micActive ? 'var(--shadow-glow)' : undefined,
-        }}>{micActive ? '🎙' : '🎤'}</button>
+          boxShadow: micActive ? '0 0 12px rgba(255,215,0,0.2)' : undefined,
+        }}>
+          <span style={{ fontSize: 14 }}>{micActive ? '🎙' : '🎤'}</span>
+          <span>{micActive ? 'STOP' : 'MIC'}</span>
+        </button>
 
         <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
           placeholder={isListening ? 'Listening...' : 'Type a command or ask a question...'}

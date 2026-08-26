@@ -72,8 +72,9 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
       const pulse = Math.sin(time * pulseSpeed) * 0.1 + 1;
 
       // Smooth hand tracking — read from ref for zero-delay updates
+      // Flip X axis because selfie camera is mirrored
       const hp = handPosRef.current;
-      const targetX = hp ? (hp.x - 0.5) * w * 0.7 : 0;
+      const targetX = hp ? (0.5 - hp.x) * w * 0.7 : 0;
       const targetY = hp ? (hp.y - 0.5) * h * 0.7 : 0;
       const targetZ = hp ? hp.z * 100 : 0;
 

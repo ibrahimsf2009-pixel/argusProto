@@ -185,7 +185,12 @@ const App: React.FC = () => {
             argusRespond('No AI provider configured. Please add your API key in Settings to enable intelligent responses.');
           }
         } catch (err: any) {
-          argusRespond(`I'm unable to reach the AI service right now. ${err.message || ''}`, undefined, true);
+          const msg = err.message || '';
+          if (msg.includes('no credits') || msg.includes('billing') || msg.includes('429')) {
+            argusRespond('Your OpenAI account has no credits left. Add credits at platform.openai.com/settings/organization/billing or add a free API key in Settings.', undefined, true);
+          } else {
+            argusRespond(`AI service error: ${msg}`, undefined, true);
+          }
         }
         break;
       }
