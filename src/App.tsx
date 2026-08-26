@@ -12,9 +12,10 @@ import CameraView from './components/Camera/CameraView';
 
 // ─── AI Intent Parser ─────────────────────────────────────────────────────
 interface ParsedCommand {
-  action: 'website' | 'search' | 'ai';
+  action: 'website' | 'search' | 'ai' | 'system';
   target: string;
   searchQuery?: string;
+  systemCommand?: 'shutdown' | 'restart' | 'sleep';
 }
 
 const WEBSITE_MAP: Record<string, string> = {
@@ -27,6 +28,17 @@ const WEBSITE_MAP: Record<string, string> = {
 
 function parseInput(text: string): ParsedCommand {
   const lower = text.toLowerCase().trim();
+
+  // System power commands
+  if (lower.match(/\b(shut\s*down|shutdown|power\s*off|turn\s*off)\b/)) {
+    return { action: 'system', target: 'shutdown', systemCommand: 'shutdown' };
+  }
+  if (lower.match(/\b(restart|reboot|restart\s*(the\s*)?(pc|computer|laptop|system|machine))\b/)) {
+    return { action: 'system', target: 'restart', systemCommand: 'restart' };
+  }
+  if (lower.match(/\b(sleep|go\s*to\s*sleep|put\s*(to\s*)?sleep|hibernate)\b/)) {
+    return { action: 'system', target: 'sleep', systemCommand: 'sleep' };
+  }
 
   // Search patterns
   const ytSearchMatch = lower.match(/(?:search|look up|find)\s+(.+?)\s+(?:on|in|at)\s+youtube/);
@@ -108,6 +120,7 @@ const App: React.FC = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [handPosition, setHandPosition] = useState<HandPosition | null>(null);
+  const [sleepMode, setSleepMode] = useState(false);
 
   const addMessage = useCallback((role: 'user' | 'argus', content: string, action?: ActionInfo, isError?: boolean) => {
     const msg: ChatMessage = {
@@ -166,6 +179,27 @@ const App: React.FC = () => {
     const parsed = parseInput(text);
 
     switch (parsed.action) {
+      case 'system': {
+        setAppState('executing');
+        const cmd = parsed.systemCommand!;
+        const cmdLabels = { shutdown: 'Shut Down', restart: 'Restart', sleep: 'Sleep' };
+        addMessage('argus', `Preparing to ${cmdLabels[cmd]}...`, { type: 'system', name: cmdLabels[cmd], status: 'executing' });
+        await new Promise(r => setTimeout(r, 500));
+        if (cmd === 'shutdown') {
+          const result = await window.argusAPI.shutdown();
+          addMessage('argus', result.message, { type: 'system', name: 'Shut Down', status: 'success' });
+        } else if (cmd === 'restart') {
+          const result = await window.argusAPI.restart();
+          addMessage('argus', result.message, { type: 'system', name: 'Restart', status: 'success' });
+        } else if (cmd === 'sleep') {
+          const result = await window.argusAPI.sleep();
+          addMessage('argus', result.message, { type: 'system', name: 'Sleep', status: 'success' });
+          // Show sleep overlay
+          setSleepMode(true);
+        }
+        setAppState('idle');
+        break;
+      }
       case 'website': {
         setAppState('executing');
         addMessage('argus', `Opening ${parsed.target}.`, { type: 'website', name: parsed.target, status: 'executing' });
@@ -291,6 +325,40 @@ const App: React.FC = () => {
           setTimeout(() => setAppState('idle'), 3500);
         }}
       />
+    );
+  }
+
+  // Sleep mode overlay
+  if (sleepMode) {
+    return (
+      <div
+        onClick={() => setSleepMode(false)}
+        onKeyDown={() => setSleepMode(false)}
+        tabIndex={0}
+        style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: '#000', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          zIndex: 9999, outline: 'none',
+        }}
+      >
+        <div style={{
+          fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: 6,
+          color: 'rgba(200, 255, 50, 0.3)', marginBottom: 16,
+        }}>ARGUS</div>
+        <div style={{
+          width: 40, height: 40, borderRadius: '50%',
+          border: '2px solid rgba(200, 255, 50, 0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'status-pulse 2s ease-in-out infinite',
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(200, 255, 50, 0.4)' }} />
+        </div>
+        <div style={{
+          marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.2)',
+          fontFamily: 'var(--font-mono)', letterSpacing: 2,
+        }}>Click anywhere to wake</div>
+      </div>
     );
   }
 

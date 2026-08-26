@@ -59,6 +59,9 @@ export interface ArgusAPI {
   minimizeWindow: () => Promise<void>;
   maximizeWindow: () => Promise<void>;
   closeWindow: () => Promise<void>;
+  shutdown: () => Promise<{ success: boolean; message: string }>;
+  restart: () => Promise<{ success: boolean; message: string }>;
+  sleep: () => Promise<{ success: boolean; message: string }>;
   onToggleListen: (callback: () => void) => void;
 }
 

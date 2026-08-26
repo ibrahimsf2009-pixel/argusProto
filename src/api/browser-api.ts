@@ -130,6 +130,23 @@ export function initBrowserAPI() {
     maximizeWindow: async () => { /* no-op in browser */ },
     closeWindow: async () => { /* no-op in browser */ },
 
+    shutdown: async () => {
+      // Browser cannot shut down the OS — close the tab as best approximation
+      window.close();
+      return { success: true, message: 'Closing application. (Browser cannot shut down the OS — use the desktop version for full power control.)' };
+    },
+
+    restart: async () => {
+      // Reload the page as approximation of restart
+      window.location.reload();
+      return { success: true, message: 'Restarting application...' };
+    },
+
+    sleep: async () => {
+      // Show a sleep overlay — browser cannot actually sleep the OS
+      return { success: true, message: 'Sleep mode activated. (Browser cannot sleep the OS — use the desktop version for full power control.)' };
+    },
+
     onToggleListen: (callback) => {
       // Keyboard shortcut handled in App.tsx
       void callback;
