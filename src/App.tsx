@@ -194,8 +194,12 @@ const App: React.FC = () => {
           }
         } catch (err: any) {
           const msg = err.message || '';
-          if (msg.includes('no credits') || msg.includes('billing') || msg.includes('429')) {
-            argusRespond('Your OpenAI account has no credits left. Add credits at platform.openai.com/settings/organization/billing or add a free API key in Settings.', undefined, true);
+          const provider = config?.aiProvider || 'openai';
+          if (msg.includes('Incorrect API key') || msg.includes('invalid') || msg.includes('401')) {
+            const link = provider === 'groq' ? 'console.groq.com/keys' : 'platform.openai.com/account/api-keys';
+            argusRespond(`Invalid API key. Make sure you pasted the correct ${provider === 'groq' ? 'Groq' : 'OpenAI'} key. Get one at ${link}`, undefined, true);
+          } else if (msg.includes('no credits') || msg.includes('billing') || msg.includes('429')) {
+            argusRespond('No credits remaining. Switch to Groq (free) in Settings, or add credits at platform.openai.com/settings/organization/billing.', undefined, true);
           } else {
             argusRespond(`AI service error: ${msg}`, undefined, true);
           }
@@ -207,7 +211,7 @@ const App: React.FC = () => {
     }
   }, [addMessage, argusRespond, config, messages]);
 
-  // ─── Gesture handler — silent, no chat messages ─────────────────────
+  // ─── Gesture handler — only handles confirmations, mic is button-only ──
   const handleGestureDetected = useCallback((gesture: GestureResult) => {
     switch (gesture.gesture) {
       case 'thumbs_up':
@@ -222,10 +226,7 @@ const App: React.FC = () => {
           setPendingConfirmation(null);
         }
         break;
-      case 'open_palm':
-      case 'fist':
-        setMicActive(prev => !prev);
-        break;
+      // Mic toggling removed from gestures — only button/keyboard allowed
       default:
         break;
     }

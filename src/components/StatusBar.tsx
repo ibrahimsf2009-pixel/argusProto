@@ -15,9 +15,9 @@ const STATUS_LABELS: Record<AppState, string> = {
 
 const StatusBar: React.FC<StatusBarProps> = ({ appState, cameraActive, micActive }) => {
   return (
-    <div style={{
-      height: 28, background: 'var(--bg-secondary)',
-      borderTop: '1px solid var(--border-subtle)',
+    <div className="glass-panel" style={{
+      height: 28,
+      borderTop: '1px solid rgba(255,215,0,0.06)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 12px', fontSize: 10, userSelect: 'none',
     }}>

@@ -79,7 +79,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, appState, onSend, onTog
   const disabled = appState === 'thinking' || appState === 'executing';
 
   return (
-    <div style={{ width: 380, minWidth: 320, maxWidth: 450, display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
+    <div className="glass-panel" style={{ width: 380, minWidth: 320, maxWidth: 450, display: 'flex', flexDirection: 'column', borderLeft: '1px solid rgba(255,215,0,0.06)' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center', padding: 20 }}>
@@ -112,12 +112,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, appState, onSend, onTog
             </div>
             <div style={{
               fontSize: 14, lineHeight: 1.5, color: msg.isError ? '#ff8080' : 'var(--text-primary)',
-              padding: '8px 12px', borderRadius: 12, maxWidth: '90%',
-              background: msg.role === 'user' ? 'var(--bg-tertiary)' : msg.isError ? 'rgba(255,80,80,0.08)' : 'rgba(255,215,0,0.06)',
-              border: `1px solid ${msg.role === 'user' ? 'var(--border-subtle)' : msg.isError ? 'rgba(255,80,80,0.2)' : 'rgba(255,215,0,0.1)'}`,
+              padding: '10px 14px', borderRadius: 14, maxWidth: '90%',
+              background: msg.role === 'user'
+                ? 'rgba(255, 215, 0, 0.06)'
+                : msg.isError ? 'rgba(255,80,80,0.08)' : 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: `1px solid ${msg.role === 'user' ? 'rgba(255,215,0,0.12)' : msg.isError ? 'rgba(255,80,80,0.2)' : 'rgba(255,255,255,0.05)'}`,
+              boxShadow: msg.role === 'user'
+                ? '0 2px 12px rgba(255,215,0,0.06), inset 0 1px 0 rgba(255,255,255,0.03)'
+                : '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
               alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              borderTopRightRadius: msg.role === 'user' ? 4 : 12,
-              borderTopLeftRadius: msg.role === 'argus' ? 4 : 12,
+              borderTopRightRadius: msg.role === 'user' ? 4 : 14,
+              borderTopLeftRadius: msg.role === 'argus' ? 4 : 14,
             }}>{msg.content}</div>
             {msg.action && (
               <div style={{
@@ -153,7 +160,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, appState, onSend, onTog
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-primary)' }}>
+      <form onSubmit={handleSubmit} className="glass-panel" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderTop: '1px solid rgba(255,215,0,0.06)' }}>
         <button type="button" onClick={onToggleMic} title={micActive ? 'Stop listening' : 'Start listening'} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           padding: '8px 14px', borderRadius: 10,
@@ -172,10 +179,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ messages, appState, onSend, onTog
         <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
           placeholder={isListening ? 'Listening...' : 'Type a command or ask a question...'}
           disabled={disabled} autoComplete="off" spellCheck={false}
+          className="glass-input"
           style={{
             flex: 1, fontFamily: 'var(--font-body)', fontSize: 14, padding: '10px 14px',
-            background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)',
-            borderRadius: 10, color: 'var(--text-primary)', outline: 'none',
+            borderRadius: 12, color: 'var(--text-primary)', outline: 'none',
           }}
         />
 

@@ -48,7 +48,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
 
           <div style={fieldStyle}>
             <label style={{ fontSize: 13, fontWeight: 500 }}>Provider</label>
-            <select className="input" value={localConfig.aiProvider} onChange={e => updateConfig('aiProvider', e.target.value)}>
+            <select className="input" value={localConfig.aiProvider} onChange={e => {
+              const newProvider = e.target.value;
+              // Clear API key when switching providers to avoid stale key errors
+              updateConfig('aiProvider', newProvider);
+              updateConfig('apiKey', '');
+            }}>
               <option value="groq">Groq (Free — Llama 3.3 70B)</option>
               <option value="openai">OpenAI (GPT — requires credits)</option>
               <option value="local">Local Model</option>
@@ -68,11 +73,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
             <label style={{ fontSize: 13, fontWeight: 500 }}>API Key</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input className="input" type={showApiKey ? 'text' : 'password'} value={localConfig.apiKey}
-                onChange={e => updateConfig('apiKey', e.target.value)} placeholder="sk-..." style={{ flex: 1 }} />
+                onChange={e => updateConfig('apiKey', e.target.value)}
+                placeholder={localConfig.aiProvider === 'groq' ? 'gsk_...' : 'sk-...'}
+                style={{ flex: 1 }} />
               <button className="btn" onClick={() => setShowApiKey(!showApiKey)} style={{ flexShrink: 0 }}>
                 {showApiKey ? '🙈' : '👁'}
               </button>
             </div>
+            {localConfig.apiKey && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4CAF50', display: 'inline-block' }} />
+                <span className="text-muted" style={{ fontSize: 11 }}>Key saved ({localConfig.apiKey.substring(0, 8)}...)</span>
+              </div>
+            )}
             <p className="text-muted" style={{ fontSize: 11, marginTop: 6 }}>
               Your API key is stored locally in your browser and never sent anywhere except the AI provider.
             </p>
