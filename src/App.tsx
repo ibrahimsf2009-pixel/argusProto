@@ -111,13 +111,37 @@ const App: React.FC = () => {
     return msg;
   }, []);
 
+  // Pick a smooth male voice from available voices
+  const selectMaleVoice = useCallback((): SpeechSynthesisVoice | null => {
+    const voices = window.speechSynthesis.getVoices();
+    // Prefer these male voices in order
+    const preferred = [
+      'Google UK English Male',
+      'Microsoft David',
+      'Microsoft Mark',
+      'Daniel',
+      'Alex',
+    ];
+    for (const name of preferred) {
+      const found = voices.find(v => v.name.includes(name));
+      if (found) return found;
+    }
+    // Fallback: find any English male voice
+    const englishMale = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('male'));
+    if (englishMale) return englishMale;
+    // Fallback: any English voice
+    return voices.find(v => v.lang.startsWith('en')) ?? null;
+  }, []);
+
   const argusRespond = useCallback((text: string, action?: ActionInfo, isError?: boolean) => {
     setAppState('speaking');
     addMessage('argus', text, action, isError);
     if (config?.voiceEnabled && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
+      const voice = selectMaleVoice();
+      if (voice) utterance.voice = voice;
+      utterance.rate = 1.0;
+      utterance.pitch = 0.85;
       utterance.volume = 0.9;
       utterance.onend = () => setAppState('idle');
       utterance.onerror = () => setAppState('idle');
@@ -125,7 +149,7 @@ const App: React.FC = () => {
     } else {
       setTimeout(() => setAppState('idle'), 800);
     }
-  }, [config, addMessage]);
+  }, [config, addMessage, selectMaleVoice]);
 
   const executeCommand = useCallback(async (text: string) => {
     setAppState('thinking');
@@ -170,36 +194,29 @@ const App: React.FC = () => {
     }
   }, [addMessage, argusRespond, config, messages]);
 
-  // ─── Gesture handler ─────────────────────────────────────────────────
+  // ─── Gesture handler — silent, no chat messages ─────────────────────
   const handleGestureDetected = useCallback((gesture: GestureResult) => {
     switch (gesture.gesture) {
       case 'thumbs_up':
         if (pendingConfirmation) {
           pendingConfirmation.resolve(true);
           setPendingConfirmation(null);
-          addMessage('argus', 'Thumbs up — action confirmed.');
-        } else {
-          argusRespond('Thumbs up detected. No pending action to confirm.');
         }
         break;
       case 'thumbs_down':
         if (pendingConfirmation) {
           pendingConfirmation.resolve(false);
           setPendingConfirmation(null);
-          addMessage('argus', 'Thumbs down — action cancelled.');
-        } else {
-          argusRespond('Thumbs down detected. No pending action to cancel.');
         }
         break;
       case 'open_palm':
       case 'fist':
         setMicActive(prev => !prev);
-        addMessage('argus', `${gesture.gesture === 'open_palm' ? 'Open palm' : 'Fist'} detected — toggling listen mode.`);
         break;
       default:
         break;
     }
-  }, [pendingConfirmation, addMessage, argusRespond]);
+  }, [pendingConfirmation]);
 
   // ─── Startup ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -271,6 +288,15 @@ const App: React.FC = () => {
         onCameraClick={() => setView(view === 'camera' ? 'main' : 'camera')}
       />
 
+      {/* Hidden hand-tracking detector — always active when camera enabled */}
+      {cameraActive && (
+        <CameraView
+          enabled={cameraActive}
+          onGestureDetected={handleGestureDetected}
+          onHandPosition={setHandPosition}
+        />
+      )}
+
       <div className="app-body">
         {view === 'settings' ? (
           <SettingsPanel
@@ -282,23 +308,16 @@ const App: React.FC = () => {
             onClose={() => setView('main')}
           />
         ) : view === 'camera' ? (
-          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-            <CameraView
-              enabled={cameraActive}
-              onGestureDetected={handleGestureDetected}
-              onHandPosition={setHandPosition}
+          <>
+            <OrbView state={appState} handPosition={handPosition} />
+            <ChatPanel
+              messages={messages}
+              appState={appState}
+              onSend={executeCommand}
+              onToggleMic={() => setMicActive(prev => !prev)}
+              micActive={micActive}
             />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <OrbView state={appState} handPosition={handPosition} />
-              <ChatPanel
-                messages={messages}
-                appState={appState}
-                onSend={executeCommand}
-                onToggleMic={() => setMicActive(prev => !prev)}
-                micActive={micActive}
-              />
-            </div>
-          </div>
+          </>
         ) : (
           <>
             <OrbView state={appState} handPosition={handPosition} />

@@ -26,6 +26,13 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
   const frameRef = useRef<number>(0);
   const timeRef = useRef(0);
   const orbOffsetRef = useRef({ x: 0, y: 0, z: 0 });
+  const handPosRef = useRef<HandPosition | null>(null);
+  const lastTimeRef = useRef(performance.now());
+
+  // Keep hand position in a ref so animation loop reads latest without re-render
+  useEffect(() => {
+    handPosRef.current = handPosition ?? null;
+  }, [handPosition]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,8 +47,12 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
     resize();
     window.addEventListener('resize', resize);
 
-    const animate = () => {
-      timeRef.current += 0.016;
+    const animate = (now: number) => {
+      // Delta time for smooth animation regardless of frame rate
+      const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05); // cap at 50ms
+      lastTimeRef.current = now;
+      timeRef.current += dt;
+
       const w = canvas.width;
       const h = canvas.height;
 
@@ -60,17 +71,21 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
       const baseRadius = Math.min(w, h) * 0.15;
       const pulse = Math.sin(time * pulseSpeed) * 0.1 + 1;
 
-      // Smooth hand tracking — lerp orb offset towards hand position
-      const targetX = handPosition ? (handPosition.x - 0.5) * w * 0.6 : 0;
-      const targetY = handPosition ? (handPosition.y - 0.5) * h * 0.6 : 0;
-      const targetZ = handPosition ? handPosition.z * 100 : 0;
-      const lerpFactor = 0.12;
-      orbOffsetRef.current.x += (targetX - orbOffsetRef.current.x) * lerpFactor;
-      orbOffsetRef.current.y += (targetY - orbOffsetRef.current.y) * lerpFactor;
-      orbOffsetRef.current.z += (targetZ - orbOffsetRef.current.z) * lerpFactor;
+      // Smooth hand tracking — read from ref for zero-delay updates
+      const hp = handPosRef.current;
+      const targetX = hp ? (hp.x - 0.5) * w * 0.7 : 0;
+      const targetY = hp ? (hp.y - 0.5) * h * 0.7 : 0;
+      const targetZ = hp ? hp.z * 100 : 0;
+
+      // Frame-rate independent lerp — works at any FPS
+      const smoothFactor = 1 - Math.pow(0.001, dt); // ~0.18 at 60fps, smooth at any rate
+      orbOffsetRef.current.x += (targetX - orbOffsetRef.current.x) * smoothFactor;
+      orbOffsetRef.current.y += (targetY - orbOffsetRef.current.y) * smoothFactor;
+      orbOffsetRef.current.z += (targetZ - orbOffsetRef.current.z) * smoothFactor;
+
       const offsetX = orbOffsetRef.current.x;
       const offsetY = orbOffsetRef.current.y;
-      const scaleFromZ = 1 + orbOffsetRef.current.z * 0.003;
+      const scaleFromZ = 1 + orbOffsetRef.current.z * 0.004;
       const radius = baseRadius * pulse * scaleFromZ;
       const cx = w / 2 + offsetX;
       const cy = h / 2 + offsetY;
@@ -168,7 +183,7 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
       }
 
       particlesRef.current = particlesRef.current.filter(p => {
-        p.x += p.vx; p.y += p.vy; p.life -= 0.016 / p.maxLife;
+        p.x += p.vx; p.y += p.vy; p.life -= dt / p.maxLife;
         if (p.life <= 0) return false;
         ctx.fillStyle = `hsla(${p.hue}, 100%, 60%, ${p.life * 0.6})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
@@ -179,9 +194,10 @@ const OrbView: React.FC<OrbViewProps> = ({ state, handPosition }) => {
       frameRef.current = requestAnimationFrame(animate);
     };
 
+    lastTimeRef.current = performance.now();
     frameRef.current = requestAnimationFrame(animate);
     return () => { cancelAnimationFrame(frameRef.current); window.removeEventListener('resize', resize); };
-  }, [state, handPosition]);
+  }, [state]); // No handPosition in deps — we read from ref
 
   const statusClass = useMemo(() => {
     switch (state) {
