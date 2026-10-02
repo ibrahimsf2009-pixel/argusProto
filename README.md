@@ -113,13 +113,18 @@ Output in `dist/`
 
 ### Gestures (when camera is enabled)
 
-| Gesture | Action |
+All gestures are tracked in the background via the webcam (no feed is shown) and trigger actions instantly, with a short cooldown between detections. See the in-app **GESTURES** panel for the full guide.
+
+| Gesture | Argus Does |
 |---------|--------|
-| Open Palm | Toggle interface |
-| Thumbs Up | Confirm action |
-| Thumbs Down | Cancel action |
-| Point Left/Right | Navigate |
-| Fist | Toggle listening |
+| ✊ Closed Fist | **Silence** — stops Argus mid-sentence and cancels speech output |
+| 🖐 Open Palm | **Wake** — brings Argus back from sleep mode |
+| 👍 Thumbs Up | **Confirm** — approves a pending action (Shut Down, Restart) |
+| 👎 Thumbs Down | **Cancel** — rejects a pending action |
+| 👉 Point Right | **Next panel** — cycles Assistant → Vision → Gestures → Settings |
+| 👈 Point Left | **Previous panel** — cycles the interface backward |
+
+**Tips:** hold your hand 30–80 cm from the webcam, palm facing the camera, one hand at a time, and keep it inside the frame. Camera data is processed locally in your browser and never uploaded.
 
 ---
 

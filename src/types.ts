@@ -18,7 +18,7 @@ export interface ActionInfo {
 // ─── App State ─────────────────────────────────────────────────────────────
 export type AppState = 'idle' | 'listening' | 'thinking' | 'executing' | 'speaking' | 'error' | 'startup' | 'setup';
 
-export type View = 'main' | 'settings' | 'camera';
+export type View = 'main' | 'settings' | 'camera' | 'gestures';
 
 // ─── Config ────────────────────────────────────────────────────────────────
 export interface ArgusConfig {

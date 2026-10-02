@@ -49,7 +49,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, o
           <div style={fieldStyle}>
             <label style={{ fontSize: 13, fontWeight: 500 }}>Provider</label>
             <select className="input" value={localConfig.aiProvider} onChange={e => updateConfig('aiProvider', e.target.value)}>
-              <option value="groq">Groq (Free — Llama 3.3 70B)</option>
+              <option value="groq">Groq (Free — Llama 3.1 8B)</option>
               <option value="openai">OpenAI (GPT — requires credits)</option>
               <option value="local">Local Model</option>
             </select>

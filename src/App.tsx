@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, ChatMessage, ArgusConfig, View, ActionInfo, GestureResult, HandPosition } from './types';
 import TitleBar from './components/TitleBar';
 import OrbView from './components/Orb/OrbView';
@@ -9,6 +9,7 @@ import StartupScreen from './components/Startup/StartupScreen';
 import FirstRunSetup from './components/Setup/FirstRunSetup';
 import StatusBar from './components/StatusBar';
 import CameraView from './components/Camera/CameraView';
+import GestureGuide from './components/Gestures/GestureGuide';
 
 // ─── AI Intent Parser ─────────────────────────────────────────────────────
 interface ParsedCommand {
@@ -65,7 +66,7 @@ function parseInput(text: string): ParsedCommand {
 // ─── AI Call (supports OpenAI and Groq) ───────────────────────────────────
 const PROVIDER_CONFIG: Record<string, { url: string; model: string }> = {
   openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-3.5-turbo' },
-  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile' },
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.1-8b-instant' },
 };
 
 async function callAI(provider: string, apiKey: string, userMessage: string, history: ChatMessage[]): Promise<string> {
@@ -105,6 +106,8 @@ async function callAI(provider: string, apiKey: string, userMessage: string, his
   return data.choices?.[0]?.message?.content || 'No response received.';
 }
 
+const PANEL_ORDER: Array<Exclude<View, 'main'>> = ['camera', 'gestures', 'settings'];
+
 // ─── Main App ──────────────────────────────────────────────────────────────
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('startup');
@@ -121,6 +124,10 @@ const App: React.FC = () => {
   const [micActive, setMicActive] = useState(false);
   const [handPosition, setHandPosition] = useState<HandPosition | null>(null);
   const [sleepMode, setSleepMode] = useState(false);
+  const messagesRef = useRef<ChatMessage[]>([]);
+
+  // Keep a ref to latest messages so executeCommand can stay dependency-stable
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   const addMessage = useCallback((role: 'user' | 'argus', content: string, action?: ActionInfo, isError?: boolean) => {
     const msg: ChatMessage = {
@@ -186,9 +193,25 @@ const App: React.FC = () => {
         addMessage('argus', `Preparing to ${cmdLabels[cmd]}...`, { type: 'system', name: cmdLabels[cmd], status: 'executing' });
         await new Promise(r => setTimeout(r, 500));
         if (cmd === 'shutdown') {
+          const confirmed = await new Promise<boolean>(resolve =>
+            setPendingConfirmation({ message: 'Shut down Argus? This closes the application.', action: cmd, resolve })
+          );
+          if (!confirmed) {
+            addMessage('argus', 'Shut down cancelled.', { type: 'system', name: 'Shut Down', status: 'cancelled' });
+            setAppState('idle');
+            break;
+          }
           const result = await window.argusAPI.shutdown();
           addMessage('argus', result.message, { type: 'system', name: 'Shut Down', status: 'success' });
         } else if (cmd === 'restart') {
+          const confirmed = await new Promise<boolean>(resolve =>
+            setPendingConfirmation({ message: 'Restart Argus? The application will reload.', action: cmd, resolve })
+          );
+          if (!confirmed) {
+            addMessage('argus', 'Restart cancelled.', { type: 'system', name: 'Restart', status: 'cancelled' });
+            setAppState('idle');
+            break;
+          }
           const result = await window.argusAPI.restart();
           addMessage('argus', result.message, { type: 'system', name: 'Restart', status: 'success' });
         } else if (cmd === 'sleep') {
@@ -220,7 +243,7 @@ const App: React.FC = () => {
         setAppState('thinking');
         try {
           if (config?.apiKey) {
-            const response = await callAI(config.aiProvider, config.apiKey, text, messages);
+            const response = await callAI(config.aiProvider, config.apiKey, text, messagesRef.current);
             argusRespond(response);
           } else {
             const providerName = config?.aiProvider === 'groq' ? 'Groq' : 'OpenAI';
@@ -243,9 +266,9 @@ const App: React.FC = () => {
       default:
         argusRespond("I'm not sure how to help with that. Try asking me to open a website or ask a question.");
     }
-  }, [addMessage, argusRespond, config, messages]);
+  }, [addMessage, argusRespond, config]);
 
-  // ─── Gesture handler — only handles confirmations, mic is button-only ──
+  // ─── Gesture handler — hand commands control the assistant ───────────
   const handleGestureDetected = useCallback((gesture: GestureResult) => {
     switch (gesture.gesture) {
       case 'thumbs_up':
@@ -260,11 +283,36 @@ const App: React.FC = () => {
           setPendingConfirmation(null);
         }
         break;
-      // Mic toggling removed from gestures — only button/keyboard allowed
+      case 'fist':
+        // Silence — stop Argus mid-sentence / stop speaking
+        if (micActive) setMicActive(false);
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        setAppState('idle');
+        break;
+      case 'open_palm':
+        // Wake — leave sleep mode
+        setSleepMode(false);
+        break;
+      case 'point_right':
+      case 'point_left': {
+        // Cycle through panels: camera → gestures → settings
+        setView(prevView => {
+          const idx = PANEL_ORDER.indexOf(prevView as Exclude<View, 'main'>);
+          if (idx === -1) {
+            // From main view, pointing opens the first panel (or last when pointing left)
+            return gesture.gesture === 'point_right' ? PANEL_ORDER[0] : PANEL_ORDER[PANEL_ORDER.length - 1];
+          }
+          const next = gesture.gesture === 'point_right'
+            ? (idx + 1) % PANEL_ORDER.length
+            : (idx - 1 + PANEL_ORDER.length) % PANEL_ORDER.length;
+          return PANEL_ORDER[next];
+        });
+        break;
+      }
       default:
         break;
     }
-  }, [pendingConfirmation]);
+  }, [pendingConfirmation, micActive]);
 
   // ─── Startup ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -368,6 +416,7 @@ const App: React.FC = () => {
         view={view}
         onSettingsClick={() => setView(view === 'settings' ? 'main' : 'settings')}
         onCameraClick={() => setView(view === 'camera' ? 'main' : 'camera')}
+        onGesturesClick={() => setView(view === 'gestures' ? 'main' : 'gestures')}
       />
 
       {/* Hidden hand-tracking detector — always active when camera enabled */}
@@ -389,17 +438,11 @@ const App: React.FC = () => {
             }}
             onClose={() => setView('main')}
           />
-        ) : view === 'camera' ? (
-          <>
-            <OrbView state={appState} handPosition={handPosition} />
-            <ChatPanel
-              messages={messages}
-              appState={appState}
-              onSend={executeCommand}
-              onToggleMic={() => setMicActive(prev => !prev)}
-              micActive={micActive}
-            />
-          </>
+        ) : view === 'gestures' ? (
+          <GestureGuide
+            cameraEnabled={!!config?.cameraEnabled}
+            onClose={() => setView('main')}
+          />
         ) : (
           <>
             <OrbView state={appState} handPosition={handPosition} />

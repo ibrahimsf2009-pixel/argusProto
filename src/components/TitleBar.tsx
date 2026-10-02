@@ -5,9 +5,10 @@ interface TitleBarProps {
   view: View;
   onSettingsClick: () => void;
   onCameraClick: () => void;
+  onGesturesClick: () => void;
 }
 
-const TitleBar: React.FC<TitleBarProps> = ({ view, onSettingsClick, onCameraClick }) => {
+const TitleBar: React.FC<TitleBarProps> = ({ view, onSettingsClick, onCameraClick, onGesturesClick }) => {
   return (
     <div className="titlebar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -36,6 +37,18 @@ const TitleBar: React.FC<TitleBarProps> = ({ view, onSettingsClick, onCameraClic
             onClick={onCameraClick}
           >
             ◎ VISION
+          </button>
+          <button
+            className="btn"
+            style={{
+              fontSize: 11, padding: '3px 10px',
+              background: view === 'gestures' ? 'rgba(255,215,0,0.1)' : 'transparent',
+              borderColor: view === 'gestures' ? 'var(--argus-yellow)' : 'transparent',
+              color: view === 'gestures' ? 'var(--argus-yellow)' : 'var(--text-muted)',
+            }}
+            onClick={onGesturesClick}
+          >
+            ✋ GESTURES
           </button>
           <button
             className="btn"
