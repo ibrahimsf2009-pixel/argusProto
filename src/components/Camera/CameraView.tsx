@@ -38,9 +38,12 @@ function classifyGesture(landmarks: Array<{ x: number; y: number; z: number }>):
   if (extendedCount === 0 && !thumbExtended)
     return { gesture: 'fist', confidence: 0.85, handPosition };
   if (indexExtended && !middleExtended && !ringExtended && !pinkyExtended) {
+    // Camera frames are unmirrored (like another person seeing you), so the
+    // image's left side is the USER's right. Name gestures from the user's
+    // point of view: finger drifting toward image-left = user points RIGHT.
     const dx = indexTip.x - indexMcp.x;
-    if (dx > 0.05) return { gesture: 'point_right', confidence: 0.8, handPosition };
-    if (dx < -0.05) return { gesture: 'point_left', confidence: 0.8, handPosition };
+    if (dx < -0.05) return { gesture: 'point_right', confidence: 0.8, handPosition };
+    if (dx > 0.05) return { gesture: 'point_left', confidence: 0.8, handPosition };
   }
 
   return { gesture: 'none', confidence: 0, handPosition };
